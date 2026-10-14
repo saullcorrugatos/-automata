@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Placar LIVE — Overlay</title>
+<style>
+:root{--blue:#08aaff;--blue2:#075bff;--red:#ff243b;--red2:#a80016;--bg:#030611;--white:#f7fbff}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 15% 20%,#062c76 0,transparent 36%),radial-gradient(ellipse at 85% 25%,#650615 0,transparent 34%),#030611;color:var(--white);font-family:Impact,"Arial Narrow",system-ui,sans-serif;overflow:hidden}
+body.transparent{background:transparent}
+.stage{width:100vw;height:100vh;min-height:620px;display:flex;flex-direction:column;gap:1.3vh;padding:2vh 3vw;position:relative}
+.panel{background:linear-gradient(145deg,#111a2b,#030711 65%);border:2px solid #253b60;box-shadow:0 0 14px #087dff55,inset 0 0 18px #07172b;border-radius:16px;position:relative}
+.timer{align-self:center;width:67%;text-align:center;padding:.7vh 1vw;font-size:clamp(42px,9vw,110px);line-height:1.1;letter-spacing:.04em;border:3px solid #147fff;box-shadow:0 0 22px #008cff88,inset 0 0 20px #111}
+.timer.ended{border-color:#ff243b;box-shadow:0 0 22px #ff173f88,inset 0 0 20px #111;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:.45}}
+.summary{display:grid;grid-template-columns:1fr 1fr 1.55fr;align-items:center;text-align:center;padding:1vh 1vw;min-height:8vh}
+.summary small{display:block;font-size:clamp(10px,1.5vw,20px);letter-spacing:.18em;color:#a8c4e9}.summary strong{font-size:clamp(22px,3.8vw,45px)}
+.leader{border-radius:999px;background:linear-gradient(90deg,#086bff,#168cff);padding:.65em .4em;font-size:clamp(12px,2.1vw,26px);box-shadow:0 0 16px #078bff77}
+.leader.red{background:linear-gradient(90deg,#df001d,#ff394d);box-shadow:0 0 16px #ff173f77}
+.leader.tie{background:linear-gradient(90deg,#5b2bd6,#a52cff);box-shadow:0 0 16px #a52cff77}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:2vw;min-height:0}
+.team{padding:1.1vh 1.2vw;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden}
+.team.blue{border-color:#078cff;box-shadow:0 0 18px #008cff77,inset 0 0 22px #06255c}.team.red{border-color:#ff243b;box-shadow:0 0 18px #ff173f77,inset 0 0 22px #4d0610}
+.teamhead{font-size:clamp(13px,2.4vw,28px);letter-spacing:.04em;padding:.4em .6em;border-radius:8px}
+.blue .teamhead{background:linear-gradient(90deg,#063caa,#03152f);color:#bceeff}.red .teamhead{background:linear-gradient(90deg,#a40017,#30030b);color:#ffd2d8}
+.score{font-size:clamp(65px,15vw,165px);line-height:.95;text-align:center;text-shadow:0 0 20px currentColor}.blue .score{color:#fff;text-shadow:0 0 20px #168cff}.red .score{color:#fff;text-shadow:0 0 20px #ff243b}
+.points{text-align:center;letter-spacing:.28em;font-size:clamp(10px,1.6vw,20px);margin:.2em 0 .5em;color:#c5d8f0}
+.track{height:clamp(8px,1.8vh,17px);background:#101722;border:1px solid #34415a;border-radius:999px;overflow:hidden}.fill{height:100%;width:50%;border-radius:999px;transition:width .4s}.blue .fill{background:linear-gradient(90deg,#0077ff,#14d5ff);box-shadow:0 0 12px #00aaff}.red .fill{background:linear-gradient(90deg,#ff0928,#ff6c7b);box-shadow:0 0 12px #ff173b}
+.percent{font-size:clamp(16px,3vw,34px);margin-top:.2em}
+.votes{display:grid;grid-template-columns:1fr 1fr;gap:2vw;min-height:0}
+.vote{padding:1vh 1vw;display:grid;grid-template-columns:1fr 1fr;gap:.5vw;align-items:center}
+.vote.blue{border-color:#078cff}.vote.red{border-color:#ff243b}
+.vote-number{font-size:clamp(38px,8vw,90px);text-align:center;border-radius:8px;background:#050a15;border:2px solid currentColor;padding:.15em 0}.vote.blue .vote-number{color:#6bdcff}.vote.red .vote-number{color:#ff7c8b}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}.key{border:1px solid #40516d;background:#0b1220;border-radius:5px;text-align:center;padding:.18em 0;font-size:clamp(10px,1.8vw,20px)}
+.vote-label{grid-column:1/-1;text-align:center;padding:.5em;border-radius:999px;font-size:clamp(12px,2vw,23px);font-weight:900;color:white}.vote.blue .vote-label{background:linear-gradient(90deg,#005aff,#08baff)}.vote.red .vote-label{background:linear-gradient(90deg,#df001d,#ff394d)}
+.bottom{flex:1;min-height:7vh;display:flex;align-items:flex-end;justify-content:space-between;padding:0 2vw 1vh;color:#dbeaff;font-size:clamp(12px,2vw,24px)}
+.gifts{font-size:clamp(20px,4vw,42px);letter-spacing:.3em;filter:drop-shadow(0 0 7px #00aaff)}
+.prompt{border:1px solid #b85cff;border-radius:999px;padding:.7em 1.2em;box-shadow:0 0 12px #a52cff44;width:70%;font-family:Arial,sans-serif;font-size:clamp(11px,1.8vw,20px)}
+.offline{position:fixed;left:50%;top:8px;transform:translateX(-50%);background:#b40c28;color:#fff;font:12px Arial,sans-serif;padding:4px 10px;border-radius:999px;display:none;z-index:10}
+body.disconnected .offline{display:block}
+@media(max-height:700px){.stage{gap:1vh;padding:1vh 2vw}.teams{flex:1}.votes{flex:1}.bottom{min-height:4vh}}
+</style>
+</head>
+<body>
+<div class="offline">Reconectando ao servidor…</div>
+<div class="stage">
+  <div class="panel timer" id="timer">--:--</div>
+  <div class="panel summary">
+    <div><small>TOTAL</small><strong id="total">0</strong></div>
+    <div><small>DIFERENÇA</small><strong id="difference">0</strong></div>
+    <div class="leader tie" id="leader">⚔ EMPATE</div>
+  </div>
+  <div class="teams">
+    <section class="panel team blue">
+      <div class="teamhead">♛ <span id="blueName">TIME AZUL</span></div>
+      <div><div class="score" id="blueScore">0</div><div class="points">P O N T O S</div><div class="track"><div class="fill" id="blueFill"></div></div><div class="percent" id="bluePercent">50,0%</div></div>
+    </section>
+    <section class="panel team red">
+      <div class="teamhead">♛ <span id="redName">TIME VERMELHO</span></div>
+      <div><div class="score" id="redScore">0</div><div class="points">P O N T O S</div><div class="track"><div class="fill" id="redFill"></div></div><div class="percent" id="redPercent">50,0%</div></div>
+    </section>
+  </div>
+  <div class="votes">
+    <section class="panel vote blue"><div class="vote-number" id="blueVote">0</div><div class="keypad"><span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">4</span><span class="key">5</span><span class="key">6</span><span class="key">7</span><span class="key">8</span><span class="key">9</span><span class="key">←</span><span class="key">0</span><span class="key">✓</span></div><div class="vote-label">☝ VOTAR <span id="blueVoteLabel">0</span></div></section>
+    <section class="panel vote red"><div class="vote-number" id="redVote">0</div><div class="keypad"><span class="key">1</span><span class="key">2</span><span class="key">3</span><span class="key">4</span><span class="key">5</span><span class="key">6</span><span class="key">7</span><span class="key">8</span><span class="key">9</span><span class="key">←</span><span class="key">0</span><span class="key">✓</span></div><div class="vote-label">☝ VOTAR <span id="redVoteLabel">0</span></div></section>
+  </div>
+  <div class="bottom"><div class="gifts">💎 👑 🎁 ✨</div><div class="prompt">☏ &nbsp; Participe da live!</div><div class="gifts">❤️ 🌹 🎁</div></div>
+</div>
+<audio id="voteSound" src="/som_voto.mp3" preload="auto"></audio>
+<script>
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+if(params.has('transparent'))document.body.classList.add('transparent');
+const muted=params.has('mute');
+const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%';
+
+function render(s){
+  const total=s.scores.blue+s.scores.red,diff=Math.abs(s.scores.blue-s.scores.red),bp=total?s.scores.blue/total*100:50,rp=100-bp;
+  $('blueScore').textContent=s.scores.blue;$('redScore').textContent=s.scores.red;$('total').textContent=total;$('difference').textContent=diff;
+  $('bluePercent').textContent=fmt(bp);$('redPercent').textContent=fmt(rp);
+  $('blueFill').style.width=bp+'%';$('redFill').style.width=rp+'%';
+  const leader=$('leader');
+  if(s.scores.blue===s.scores.red){leader.textContent='⚔ EMPATE';leader.className='leader tie'}
+  else if(s.scores.blue>s.scores.red){leader.textContent='♛ AZUL NA FRENTE';leader.className='leader'}
+  else{leader.textContent='♛ VERMELHO NA FRENTE';leader.className='leader red'}
+  $('blueVote').textContent=s.votes.blue;$('redVote').textContent=s.votes.red;$('blueVoteLabel').textContent=s.votes.blue;$('redVoteLabel').textContent=s.votes.red;
+  $('blueName').textContent=s.names.blue||'TIME AZUL';$('redName').textContent=s.names.red||'TIME VERMELHO';
+  $('timer').textContent=String(Math.floor(s.seconds/60)).padStart(2,'0')+':'+String(s.seconds%60).padStart(2,'0');
+  $('timer').classList.toggle('ended',s.seconds===0);
+}
+function flash(team){
+  const el=document.querySelector('.team.'+team);
+  if(el)el.animate([{transform:'scale(1)'},{transform:'scale(1.025)'},{transform:'scale(1)'}],{duration:300});
+}
+function playVoteSound(){
+  if(muted)return;
+  const audio=$('voteSound');
+  audio.currentTime=0;
+  const p=audio.play();
+  if(p&&p.catch)p.catch(()=>{});
+}
+
+const es=new EventSource('/events');
+es.addEventListener('state',e=>{document.body.classList.remove('disconnected');render(JSON.parse(e.data))});
+es.addEventListener('flash',e=>flash(JSON.parse(e.data).team));
+es.addEventListener('vote',e=>{const {team}=JSON.parse(e.data);flash(team);playVoteSound()});
+es.onopen=()=>document.body.classList.remove('disconnected');
+es.onerror=()=>document.body.classList.add('disconnected');
+</script>
+</body>
+</html>
